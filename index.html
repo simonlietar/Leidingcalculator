@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Leidingdiameter Calculator — KlimaatWatt</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:13px;color:#111;background:#fff}
+.page{max-width:920px;margin:0 auto;padding:24px 20px}
+
+.logo-bar{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:3px solid #185fa5;margin-bottom:20px}
+.logo-bar h1{font-size:22px;font-weight:700;color:#185fa5}
+.logo-bar .sub{font-size:11px;color:#666;margin-top:2px}
+.logo-bar .ref{font-size:10px;color:#888;text-align:right;line-height:1.6}
+
+.meta-grid{display:grid;grid-template-columns:2fr 2fr 1fr;gap:12px;margin-bottom:18px;padding:14px;background:#f0f5fc;border-radius:7px;border:1px solid #c5d8f0}
+.mf label{display:block;font-size:10px;font-weight:700;color:#185fa5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.mf input{width:100%;height:32px;font-size:13px;padding:0 8px;border:1px solid #b0c4de;border-radius:5px;background:#fff}
+
+.box-gray{background:#f7f7f7;border:1px solid #ddd;border-radius:7px;padding:14px;margin-bottom:14px}
+.box-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#555;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid #e0e0e0}
+.s-row{display:flex;gap:10px;flex-wrap:wrap}
+.sf{display:flex;flex-direction:column;gap:3px;flex:1;min-width:130px}
+.sf label{font-size:11px;color:#555}
+.sf select,.sf input[type=number]{height:32px;font-size:13px;padding:0 7px;border:1px solid #ccc;border-radius:5px;background:#fff}
+
+.box-net{background:#f0f5fc;border:1px solid #c5d8f0;border-radius:7px;padding:14px;margin-bottom:14px}
+.box-net .box-title{color:#185fa5;border-bottom-color:#b5d4f4}
+
+/* ── VERTREKPUNT (WP of splitsing) ── */
+.source-block{border-radius:7px;overflow:hidden;margin-bottom:0}
+
+/* WP blok */
+.wp-block{display:flex;align-items:stretch;border:2px solid #185fa5;border-radius:7px;background:#fff}
+.wp-icon{width:44px;min-width:44px;background:#185fa5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px}
+.wp-body{flex:1;padding:8px 14px}
+.wp-title{font-size:13px;font-weight:700;color:#185fa5}
+.wp-sub{font-size:11px;color:#666;margin-top:1px}
+.wp-pow{font-size:13px;font-weight:700;color:#185fa5;padding:0 14px;display:flex;align-items:center;white-space:nowrap}
+
+/* GEDEELDE LENGTE: van dit vertrekpunt naar alle directe kinderen */
+.shared-len{display:flex;align-items:center;gap:10px;background:#fffdf0;border:1px solid #f0c040;border-radius:0 0 6px 6px;padding:7px 12px;margin-top:-1px}
+.shared-len label{font-size:11px;font-weight:700;color:#854f0b;white-space:nowrap}
+.shared-len input{height:30px;width:90px;font-size:13px;font-weight:700;padding:0 8px;border:1px solid #f0c040;border-radius:4px;background:#fff}
+.shared-len .sh-hint{font-size:11px;color:#b08030}
+
+/* VALIDATIE BANNER */
+.val-ok {display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 12px;background:#eaf3de;border:1px solid #9fd87b;border-radius:5px;font-size:12px;color:#3b6d11;font-weight:600}
+.val-err{display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 12px;background:#fcebeb;border:1px solid #f09595;border-radius:5px;font-size:12px;color:#a32d2d;font-weight:600}
+.val-msg{font-weight:400;margin-left:4px}
+
+/* KINDEREN INSPRONG */
+.children-wrap{margin-left:22px;border-left:2px dashed #aac;padding-left:12px;margin-top:6px}
+
+/* NODE CARDS */
+.node-wrap{margin-bottom:5px}
+.node-card{border-radius:6px;overflow:hidden}
+.node-card.splitsing{border:1.5px solid #185fa5}
+.node-card.afgifte  {border:1.5px solid #3b6d11}
+
+.node-top{display:flex;align-items:stretch}
+.node-icon{width:40px;min-width:40px;display:flex;align-items:center;justify-content:center;font-size:16px;align-self:stretch}
+.splitsing .node-icon{background:#e6f1fb}
+.afgifte   .node-icon{background:#eaf3de}
+.node-badge{font-size:14px;font-weight:700;padding:0 10px;display:flex;align-items:center;min-width:36px}
+.splitsing .node-badge{background:#cde3f8;color:#185fa5;font-family:Georgia,serif;font-style:italic}
+.afgifte   .node-badge{background:#c5e6b0;color:#3b6d11}
+.node-info{flex:1;padding:7px 10px}
+.node-type-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.splitsing .node-type-lbl{color:#185fa5}
+.afgifte   .node-type-lbl{color:#3b6d11}
+.node-desc{font-size:11px;color:#888;margin-top:1px}
+.node-del{width:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#a32d2d;font-size:20px;border:none;background:none;flex-shrink:0}
+.node-del:hover{background:#fcebeb}
+
+/* Vermogenscheck inline */
+.pow-ok {font-size:10px;color:#3b6d11;padding:0 8px;display:flex;align-items:center;gap:3px;background:#f2fbe8;border-left:1px solid #c5e6b0;white-space:nowrap}
+.pow-err{font-size:10px;color:#a32d2d;padding:0 8px;display:flex;align-items:center;gap:3px;background:#fcebeb;border-left:1px solid #f09595;white-space:nowrap}
+
+/* NODE FIELDS */
+.node-fields{display:flex;flex-wrap:wrap;border-top:1px solid rgba(0,0,0,.07)}
+.other-fields{display:flex;gap:8px;flex-wrap:wrap;padding:8px 10px;flex:1;background:#fafafa}
+.nf{display:flex;flex-direction:column;gap:2px;flex:1;min-width:85px}
+.nf label{font-size:10px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.nf input[type=number],.nf input[type=text],.nf select{height:28px;font-size:12px;padding:0 6px;border:1px solid #ccc;border-radius:4px;background:#fff;width:100%}
+
+.node-actions{padding:5px 10px;display:flex;gap:6px;background:#f5f5f5;border-top:1px solid #eee}
+.btn-xs{height:24px;padding:0 10px;font-size:11px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;font-weight:600}
+.btn-xs:hover{background:#eee}
+.btn-split{color:#185fa5;border-color:#b5d4f4;background:#f0f7ff}
+.btn-afg  {color:#3b6d11;border-color:#9fd87b;background:#f2fbe8}
+
+.action-bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.btn{height:36px;padding:0 18px;border:1px solid #ccc;border-radius:5px;background:#fff;font-size:13px;cursor:pointer;font-weight:600}
+.btn:hover{background:#eee}
+.btn-calc{background:#185fa5;color:#fff;border-color:#185fa5}
+.btn-calc:hover{background:#0c447c}
+.btn-print{color:#185fa5;border-color:#185fa5}
+
+/* RESULTS */
+.res-header{background:#f0f5fc;border:1px solid #c5d8f0;border-radius:7px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px}
+.rh-title{font-size:15px;font-weight:700;color:#185fa5}
+.rh-sub{font-size:12px;color:#555;margin-top:2px}
+.rh-meta{font-size:12px;color:#333;text-align:right;line-height:1.8}
+table.rt{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px}
+table.rt th{background:#185fa5;color:#fff;padding:7px 10px;text-align:left;font-size:11px;font-weight:700}
+table.rt td{padding:7px 10px;border-bottom:1px solid #eee;vertical-align:middle}
+table.rt tr.row-hoofd td{background:#fff8e6}
+table.rt tr:not(.row-hoofd):nth-child(even) td{background:#f9f9f9}
+.dia-big{font-size:15px;font-weight:700}
+.seg-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.seg-lbl.hoofd{color:#854f0b}
+.seg-lbl.sp{color:#185fa5}
+.seg-lbl.af{color:#3b6d11}
+.seg-name{font-size:12px;color:#333}
+.badge{display:inline-block;padding:2px 9px;border-radius:4px;font-size:11px;font-weight:700}
+.b-ok  {background:#eaf3de;color:#3b6d11}
+.b-warn{background:#faeeda;color:#854f0b}
+.b-fast{background:#fcebeb;color:#a32d2d}
+.b-slow{background:#e6f1fb;color:#0c447c}
+.legend{padding:9px 13px;background:#f7f7f7;border-radius:5px;font-size:11px;color:#555;line-height:1.8}
+
+@media print{
+  .no-print{display:none!important}
+  .page{padding:0;max-width:100%}
+  table.rt tr{break-inside:avoid}
+  .res-header{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="logo-bar">
+  <div>
+    <h1>KlimaatWatt</h1>
+    <div class="sub">Leidingdiameter calculator — warmtepompen &amp; centrale verwarming</div>
+  </div>
+  <div class="ref">NIBE NP-V · Tabel A + C<br>Max. 200 Pa/m drukval</div>
+</div>
+
+<div class="meta-grid no-print">
+  <div class="mf"><label>Naam werf / klant</label><input id="wNaam" type="text" placeholder="bv. Familie De Smedt"></div>
+  <div class="mf"><label>Adres werf</label><input id="wAdres" type="text" placeholder="bv. Kerkstraat 12, Gent"></div>
+  <div class="mf"><label>Datum</label><input id="wDatum" type="date"></div>
+</div>
+
+<div class="box-gray no-print">
+  <div class="box-title">Instellingen installatie</div>
+  <div class="s-row">
+    <div class="sf"><label>Leidingmateriaal</label>
+      <select id="mat">
+        <option value="koper">Koper (EN 1057)</option>
+        <option value="meerlagen">Meerlagen kunststof</option>
+        <option value="staal">Staal gegavaniseerd (BS 1387)</option>
+      </select>
+    </div>
+    <div class="sf"><label>Totaal vermogen warmtepomp (kW)</label>
+      <input type="number" id="totPow" value="12" min="0.5" max="100" step="0.5" onchange="re()">
+    </div>
+    <div class="sf"><label>ΔT op de hoofdleiding</label>
+      <select id="mainDT">
+        <option value="3">3K</option>
+        <option value="5">5K — vloerverwarming</option>
+        <option value="7">7K</option>
+        <option value="10" selected>10K — ventiloconvectoren / radiatoren</option>
+        <option value="12">12K</option>
+        <option value="15">15K</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="box-net no-print">
+  <div class="box-title">Netwerk</div>
+
+  <!-- WP startblok -->
+  <div class="wp-block">
+    <div class="wp-icon">&#9654;</div>
+    <div class="wp-body">
+      <div class="wp-title">Warmtepomp</div>
+      <div class="wp-sub">startpunt van het leidingnet</div>
+    </div>
+    <div class="wp-pow" id="wp-pow-label">12 kW</div>
+  </div>
+
+  <!-- Gedeelde lengte WP → eerste niveau -->
+  <div class="shared-len">
+    <label>Afstand WP → eerste splitsing / afgiftesysteem:</label>
+    <input type="number" id="mainLen" value="3" min="0" max="500" step="1" onchange="re()">
+    <span class="sh-hint">meter &nbsp;·&nbsp; deze lengte geldt voor alle directe takken vanuit de WP</span>
+  </div>
+
+  <div id="val-banner"></div>
+
+  <!-- Kinderen van WP -->
+  <div class="children-wrap">
+    <div id="editor"></div>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button class="btn-xs btn-split" onclick="addRoot('splitsing')">+ Splitsing toevoegen</button>
+      <button class="btn-xs btn-afg"   onclick="addRoot('afgifte')">+ Afgiftesysteem toevoegen</button>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;padding:8px 10px;background:#f0f0f0;border-radius:5px;font-size:11px;color:#555;line-height:1.8">
+    <strong style="color:#185fa5"><i>A, B, C...</i></strong> = splitsing (T-stuk of verdeler) &nbsp;·&nbsp;
+    <strong style="color:#3b6d11">1, 2, 3...</strong> = afgiftesysteem (ventilo, radiator, vloerverwarming...)<br>
+    Bij een splitsing geef je de <strong>gedeelde lengte</strong> in van die splitsing naar alle directe kinderen ervan.<br>
+    De som van de vermogens op elk niveau moet gelijk zijn aan het vermogen van de bovenliggende splitsing of warmtepomp.
+  </div>
+</div>
+
+<div class="action-bar no-print">
+  <button class="btn btn-calc" onclick="calc()">&#9654; Berekenen</button>
+  <button class="btn btn-print" onclick="window.print()">&#128438; Afdrukken / PDF</button>
+  <button class="btn" onclick="doReset()" style="color:#666">&#8635; Laad voorbeeld</button>
+</div>
+
+<div id="results"></div>
+</div>
+
+<script>
+// ── TABELLEN ──────────────────────────────────────────────────────────────────
+var KW=[.5,1,1.5,2,2.5,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30,35,40,45,50,60];
+var FT={
+  3: [.14,.29,.43,.57,.72,.86,1.15,1.44,1.72,2.01,2.30,2.58,2.87,3.16,3.44,3.73,4.02,4.30,4.59,4.88,5.17,5.45,5.74,7.17,8.61,10.04,11.48,12.91,14.35,17.22],
+  5: [.09,.17,.26,.34,.43,.52,.69,.86,1.03,1.21,1.38,1.55,1.72,1.89,2.07,2.24,2.41,2.58,2.75,2.93,3.10,3.27,3.44,4.30,5.17,6.03,6.89,7.75,8.61,10.33],
+  7: [.06,.12,.18,.25,.31,.37,.49,.61,.74,.86,.98,1.11,1.23,1.35,1.48,1.60,1.72,1.84,1.97,2.09,2.21,2.34,2.46,3.07,3.69,4.30,4.92,5.53,6.15,7.38],
+  10:[.04,.09,.13,.17,.22,.26,.34,.43,.52,.60,.69,.77,.86,.95,1.03,1.12,1.21,1.29,1.38,1.46,1.55,1.64,1.72,2.15,2.58,3.01,3.44,3.87,4.30,5.17],
+  12:[.04,.07,.11,.14,.18,.22,.29,.36,.43,.50,.57,.65,.72,.79,.86,.93,1.00,1.08,1.15,1.22,1.29,1.36,1.43,1.79,2.15,2.51,2.87,3.23,3.59,4.30],
+  15:[.03,.06,.09,.11,.14,.17,.23,.29,.34,.40,.46,.52,.57,.63,.69,.75,.80,.86,.92,.98,1.03,1.09,1.15,1.43,1.72,2.01,2.30,2.58,2.87,3.44]
+};
+var CK=[{m:.11,l:"12 mm",di:.009},{m:.17,l:"15 mm",di:.013},{m:.32,l:"15 mm",di:.013},{m:.56,l:"22 mm",di:.0198},{m:1.70,l:"28 mm",di:.0256},{m:1.85,l:"28 mm",di:.0256},{m:2.50,l:"35 mm",di:.032},{m:2.80,l:"35 mm",di:.032},{m:4.20,l:"42 mm",di:.039},{m:4.90,l:"54 mm",di:.051},{m:7.30,l:"54 mm",di:.051},{m:8.20,l:"60 mm",di:.054},{m:11.5,l:"70 mm",di:.064},{m:99,l:"76 mm+",di:.070}];
+var CM=[{m:.09,l:"14 mm",di:.010},{m:.14,l:"16 mm",di:.012},{m:.32,l:"20 mm",di:.016},{m:.57,l:"20 mm",di:.016},{m:1.12,l:"26 mm",di:.022},{m:2.06,l:"32 mm",di:.026},{m:3.52,l:"40 mm",di:.034},{m:7.25,l:"50 mm",di:.044},{m:10.5,l:"63 mm",di:.057},{m:15.0,l:"75 mm",di:.067},{m:99,l:"110 mm",di:.100}];
+var CS=[{m:.20,l:'DN15 (½")',di:.015},{m:.50,l:'DN20 (¾")',di:.020},{m:.70,l:'DN25 (1")',di:.025},{m:2.10,l:'DN32 (1¼")',di:.032},{m:3.15,l:'DN40 (1½")',di:.040},{m:6.10,l:'DN50 (2")',di:.050},{m:13.0,l:'DN65 (2½")',di:.065},{m:18.0,l:'DN80 (3")',di:.080},{m:30.0,l:'DN100 (4")',di:.100},{m:71.0,l:'DN125 (5")',di:.125},{m:99,l:'DN125+',di:.125}];
+
+function getFlow(kw,dT){
+  var c=FT[dT]||FT[10];if(kw<=0)return 0;
+  var i=0;while(i<KW.length-1&&KW[i]<kw)i++;
+  if(KW[i]===kw||i===0)return c[i];
+  return c[i-1]+(c[i]-c[i-1])*(kw-KW[i-1])/(KW[i]-KW[i-1]);
+}
+function getDiam(fl,mat){var t=mat==="koper"?CK:mat==="meerlagen"?CM:CS;for(var i=0;i<t.length;i++){if(fl<=t[i].m)return t[i];}return t[t.length-1];}
+function getSpeed(fl,di){return(fl/3600)/(Math.PI*(di/2)*(di/2));}
+function statusOf(spd){
+  if(spd<0.2)return{cls:"b-slow",lbl:"te traag"};
+  if(spd>1.5)return{cls:"b-fast",lbl:"te snel !"};
+  if(spd>1.0)return{cls:"b-warn",lbl:"aan grens"};
+  return{cls:"b-ok",lbl:"goed"};
+}
+
+// ── BOOM + LABELS ─────────────────────────────────────────────────────────────
+var uid=0;function nid(){return ++uid;}
+var splitIdx=0;var afgIdx=0;
+var ALPHA="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+function nextSplitLbl(){var i=splitIdx++;return i<26?ALPHA[i]:ALPHA[Math.floor(i/26)-1]+ALPHA[i%26];}
+function nextAfgLbl(){return String(++afgIdx);}
+var tree=[];
+
+function makeNode(type){
+  // childrenLen = gedeelde lengte van DIT knooppunt naar al zijn directe kinderen
+  return{id:nid(),type:type,lbl:type==="splitsing"?nextSplitLbl():nextAfgLbl(),
+    name:"",pow:1,dT:10,childrenLen:3,ch:[]};
+}
+function findN(list,id){for(var i=0;i<list.length;i++){if(list[i].id===id)return list[i];var f=findN(list[i].ch,id);if(f)return f;}return null;}
+function removeN(list,id){for(var i=0;i<list.length;i++){if(list[i].id===id){list.splice(i,1);return true;}if(removeN(list[i].ch,id))return true;}return false;}
+function childSum(ch){var s=0;ch.forEach(function(c){s+=c.pow;});return Math.round(s*10)/10;}
+
+// ── NODE HTML ─────────────────────────────────────────────────────────────────
+function nodeHTML(n){
+  var isSp=n.type==="splitsing";
+  var icon=isSp?"⑂":"▣";
+  var tlbl=isSp?"Splitsing":"Afgiftesysteem";
+  var dtOpts=[3,5,7,10,12,15].map(function(v){
+    return'<option value="'+v+'"'+(n.dT===v?' selected':'')+'>'+v+'K</option>';
+  }).join('');
+
+  // Vermogenscheck voor splitsing
+  var powCheckHTML="";
+  if(isSp&&n.ch.length>0){
+    var cSum=childSum(n.ch);
+    var ok=Math.abs(cSum-n.pow)<0.05;
+    powCheckHTML=ok
+      ?'<div class="pow-ok">&#10003; '+n.pow+' kW</div>'
+      :'<div class="pow-err">&#9888; kinderen: '+cSum+' kW (verschil '+(Math.round((n.pow-cSum)*10)/10)+' kW)</div>';
+  }
+
+  // Gedeelde lengte naar kinderen — alleen tonen als splitsing MET kinderen of splitsing zonder kinderen
+  var sharedLenHTML="";
+  if(isSp){
+    sharedLenHTML='<div class="shared-len" style="border-radius:0;margin-top:0;border-top:1px solid #f0c040">'
+      +'<label>Afstand '+n.lbl+' → kinderen:</label>'
+      +'<input type="number" value="'+n.childrenLen+'" min="0" max="500" step="1" onchange="upd('+n.id+',\'childrenLen\',+this.value)">'
+      +'<span class="sh-hint">meter (geldt voor alle directe takken vanuit splitsing '+n.lbl+')</span>'
+      +'</div>';
+  }
+
+  var chHTML="";
+  if(n.ch.length>0){
+    chHTML='<div class="children-wrap">'+n.ch.map(nodeHTML).join('')
+      +(isSp?'<div style="margin-top:6px;display:flex;gap:6px">'
+        +'<button class="btn-xs btn-split" onclick="addCh('+n.id+',\'splitsing\')">+ Splitsing</button>'
+        +'<button class="btn-xs btn-afg" onclick="addCh('+n.id+',\'afgifte\')">+ Afgiftesysteem</button>'
+        +'</div>':'')
+      +'</div>';
+  } else if(isSp){
+    chHTML='<div class="children-wrap">'
+      +'<div style="margin-top:6px;display:flex;gap:6px">'
+      +'<button class="btn-xs btn-split" onclick="addCh('+n.id+',\'splitsing\')">+ Splitsing</button>'
+      +'<button class="btn-xs btn-afg" onclick="addCh('+n.id+',\'afgifte\')">+ Afgiftesysteem</button>'
+      +'</div></div>';
+  }
+
+  return '<div class="node-wrap">'
+    +'<div class="node-card '+n.type+'">'
+      +'<div class="node-top">'
+        +'<div class="node-icon">'+icon+'</div>'
+        +'<div class="node-badge">'+n.lbl+'</div>'
+        +'<div class="node-info">'
+          +'<div class="node-type-lbl">'+tlbl+'</div>'
+          +'<div class="node-desc">'+(n.name||'<span style="color:#bbb">geen omschrijving</span>')+'</div>'
+        +'</div>'
+        +powCheckHTML
+        +'<button class="node-del" onclick="delN('+n.id+')" title="Verwijder">&#215;</button>'
+      +'</div>'
+      +'<div class="node-fields">'
+        +'<div class="other-fields">'
+          +'<div class="nf"><label>Vermogen (kW)</label>'
+            +'<input type="number" value="'+n.pow+'" min=".5" max="100" step=".5" onchange="upd('+n.id+',\'pow\',+this.value)"></div>'
+          +'<div class="nf"><label>Delta T</label>'
+            +'<select onchange="upd('+n.id+',\'dT\',+this.value)">'+dtOpts+'</select></div>'
+          +'<div class="nf" style="min-width:130px;flex:2"><label>Omschrijving</label>'
+            +'<input type="text" value="'+n.name.replace(/"/g,'&quot;')+'" placeholder="bv. woonkamer" onchange="upd('+n.id+',\'name\',this.value)"></div>'
+        +'</div>'
+      +'</div>'
+      +sharedLenHTML
+    +'</div>'
+    +chHTML
+    +'</div>';
+}
+
+// ── BANNER ────────────────────────────────────────────────────────────────────
+function updateBanner(){
+  var totPow=+document.getElementById('totPow').value||12;
+  document.getElementById('wp-pow-label').textContent=totPow+' kW';
+  var banner=document.getElementById('val-banner');
+  if(tree.length===0){banner.innerHTML='';return;}
+  var cSum=childSum(tree);
+  var ok=Math.abs(cSum-totPow)<0.05;
+  banner.innerHTML=ok
+    ?'<div class="val-ok">&#10003; Vermogens kloppen: '+cSum+' kW = '+totPow+' kW WP-vermogen</div>'
+    :'<div class="val-err">&#9888; Som van directe takken = <strong>'+cSum+' kW</strong> — verschil met WP-vermogen ('+totPow+' kW): <strong>'+(Math.round((totPow-cSum)*10)/10)+' kW</strong><span class="val-msg"> Pas de vermogens aan zodat ze optellen tot '+totPow+' kW.</span></div>';
+}
+
+function addCh(pid,type){var p=findN(tree,pid);if(p)p.ch.push(makeNode(type));re();}
+function delN(id){removeN(tree,id);re();}
+function upd(id,f,v){var n=findN(tree,id);if(n)n[f]=v;re();}
+function addRoot(type){tree.push(makeNode(type));re();}
+function re(){
+  document.getElementById('editor').innerHTML=tree.map(nodeHTML).join('');
+  updateBanner();
+}
+
+// ── BEREKENING ────────────────────────────────────────────────────────────────
+// Segmenten ophalen: voor elk knooppunt weten we de lengte van het VORIGE punt naar hier.
+// Die lengte staat bij het PARENT als childrenLen (of mainLen voor de WP).
+function walkSegs(n,mat,segs,parentLen){
+  var fl=getFlow(n.pow,n.dT);
+  var dr=getDiam(fl,mat);
+  var spd=getSpeed(fl,dr.di);
+  // parentLen = de gedeelde lengte die het parent heeft ingesteld voor zijn kinderen
+  segs.push({lbl:n.lbl,type:n.type,name:n.name,pow:n.pow,dT:n.dT,
+    len:parentLen,flow:fl,dia:dr.l,spd:spd});
+  // Kinderen van dit knooppunt gebruiken n.childrenLen als hun lengte (als splitsing)
+  if(n.type==="splitsing"){
+    n.ch.forEach(function(c){walkSegs(c,mat,segs,n.childrenLen);});
+  }
+}
+
+function calc(){
+  var mat=document.getElementById('mat').value;
+  var matLbl={koper:"Koper (EN 1057)",meerlagen:"Meerlagen kunststof",staal:"Staal gegavaniseerd"}[mat];
+  var totPow=+document.getElementById('totPow').value||12;
+  var mainDT=+document.getElementById('mainDT').value||10;
+  var mainLen=+document.getElementById('mainLen').value||0;
+  var naam=document.getElementById('wNaam').value||'—';
+  var adres=document.getElementById('wAdres').value||'—';
+  var datum=document.getElementById('wDatum').value;
+  if(datum){var d=new Date(datum);datum=d.toLocaleDateString('nl-BE',{day:'2-digit',month:'2-digit',year:'numeric'});}
+  else datum='—';
+
+  var segs=[];
+  var mfl=getFlow(totPow,mainDT);
+  var mdr=getDiam(mfl,mat);
+  var mspd=getSpeed(mfl,mdr.di);
+  segs.push({lbl:'WP',type:'hoofd',name:'Warmtepomp — vollast op hoofdleiding',
+    pow:totPow,dT:mainDT,len:mainLen,flow:mfl,dia:mdr.l,spd:mspd});
+
+  // Directe kinderen van WP krijgen mainLen als hun leidinglengte
+  tree.forEach(function(n){walkSegs(n,mat,segs,mainLen);});
+
+  var html='<div class="res-header">'
+    +'<div><div class="rh-title">Leidingdiameter berekening — KlimaatWatt</div>'
+    +'<div class="rh-sub">Materiaal: <strong>'+matLbl+'</strong> &nbsp;·&nbsp; WP: <strong>'+totPow+' kW</strong> &nbsp;·&nbsp; ΔT: <strong>'+mainDT+'K</strong></div></div>'
+    +'<div class="rh-meta"><div><strong>Werf:</strong> '+naam+'</div><div><strong>Adres:</strong> '+adres+'</div><div><strong>Datum:</strong> '+datum+'</div></div>'
+    +'</div>';
+
+  html+='<table class="rt"><thead><tr>'
+    +'<th style="min-width:220px">Segment</th>'
+    +'<th>Lengte leiding</th><th>Vermogen</th><th>ΔT</th>'
+    +'<th>Debiet (m³/u)</th><th>Diameter</th><th>Snelheid (m/s)</th><th>Status</th>'
+    +'</tr></thead><tbody>';
+
+  segs.forEach(function(s){
+    var st=statusOf(s.spd);
+    var isH=s.type==='hoofd';var isSp=s.type==='splitsing';
+    var rowCls=isH?' class="row-hoofd"':'';
+    var slbl='';
+    if(isH)       slbl='<div class="seg-lbl hoofd">&#9654; Hoofdleiding</div>';
+    else if(isSp) slbl='<div class="seg-lbl sp">&#9632; Splitsing <i>'+s.lbl+'</i></div>';
+    else          slbl='<div class="seg-lbl af">&#9632; Afgiftesysteem '+s.lbl+'</div>';
+    var sname='<div class="seg-name">'+(s.name||'')+'</div>';
+    var lenStr=s.len>0?s.len+' m':'0 m';
+    html+='<tr'+rowCls+'>'
+      +'<td>'+slbl+sname+'</td>'
+      +'<td>'+lenStr+'</td>'
+      +'<td>'+s.pow+' kW</td>'
+      +'<td>'+s.dT+'K</td>'
+      +'<td>'+s.flow.toFixed(2)+'</td>'
+      +'<td><span class="dia-big">'+s.dia+'</span></td>'
+      +'<td>'+s.spd.toFixed(2)+'</td>'
+      +'<td><span class="badge '+st.cls+'">'+st.lbl+'</span></td>'
+      +'</tr>';
+  });
+
+  html+='</tbody></table>';
+  html+='<div class="legend">'
+    +'<strong>Snelheid (m/s):</strong> '
+    +'<span style="color:#3b6d11">&#9632; goed</span> 0,2–1,0 &nbsp;·&nbsp; '
+    +'<span style="color:#854f0b">&#9632; aan grens</span> 1,0–1,5 &nbsp;·&nbsp; '
+    +'<span style="color:#a32d2d">&#9632; te snel</span> &gt;1,5 → stromingslawaai &nbsp;·&nbsp; '
+    +'<span style="color:#0c447c">&#9632; te traag</span> &lt;0,2 → sediment/luchtbellen<br>'
+    +'<strong>Bron:</strong> NIBE NP-V · Tabel A (debiet per kW &amp; ΔT) · Tabel C (max. 200 Pa/m, rechte leiding) · klimaatwatt.be'
+    +'</div>';
+  document.getElementById('results').innerHTML=html;
+}
+
+// ── VOORBEELD ─────────────────────────────────────────────────────────────────
+function doReset(){
+  uid=0;splitIdx=0;afgIdx=0;tree=[];
+  var A=makeNode('splitsing');A.pow=2;A.dT=10;A.childrenLen=3;A.name="Links";
+  var n1=makeNode('afgifte'); n1.pow=1;n1.dT=10;n1.name="Ventilo links 1";
+  var n2=makeNode('afgifte'); n2.pow=1;n2.dT=10;n2.name="Ventilo links 2";
+  A.ch=[n1,n2];
+  var B=makeNode('splitsing');B.pow=10;B.dT=10;B.childrenLen=4;B.name="Rechts";
+  var n3=makeNode('afgifte'); n3.pow=4;n3.dT=10;n3.name="Ventilos R1–R4 (4×1 kW)";
+  var C=makeNode('splitsing');C.pow=6;C.dT=10;C.childrenLen=3;C.name="2e splitsing rechts";
+  var n4=makeNode('afgifte'); n4.pow=2;n4.dT=10;n4.name="Ventilo R5 (2 kW)";
+  var n5=makeNode('afgifte'); n5.pow=4;n5.dT=10;n5.name="Ventilos R6–R9 (4×1 kW)";
+  C.ch=[n4,n5];B.ch=[n3,C];tree=[A,B];
+  document.getElementById('totPow').value=12;
+  document.getElementById('mainDT').value=10;
+  document.getElementById('mainLen').value=3;
+  re();calc();
+}
+
+document.getElementById('wDatum').value=new Date().toISOString().split('T')[0];
+doReset();
+</script>
+</body>
+</html>
